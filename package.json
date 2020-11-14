@@ -1,6 +1,6 @@
 {
   "name": "language-scheme",
-  "version": "1.0",
+  "version": "1.4.0-1",
   "private": false,
   "description": "A syntax highlighter for the Scheme programming language",
   "keywords": [
