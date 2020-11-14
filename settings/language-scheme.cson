@@ -1,4 +1,4 @@
-'.source.scheme':
-  'editor':
-    'commentStart': ';'
-    'increaseIndentPattern': '^.*\\(.*[^)"]$'
+.source.scheme:
+  editor:
+    commentStart: ';'
+    increaseIndentPattern: '^.*\\(.*[^)"]$'

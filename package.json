@@ -1,9 +1,21 @@
 {
   "name": "language-scheme",
-  "version": "1.4.0",
+  "version": "1.0",
   "private": false,
-  "description": "A scheme syntax highlighter",
-  "repository": "https://github.com/backjo/language-scheme",
+  "description": "A syntax highlighter for the Scheme programming language",
+  "keywords": [
+    "syntax",
+    "highlighting",
+    "grammar",
+    "scheme"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tjnl/language-scheme"
+  },
+  "bugs": {
+    "url": "https://github.com/tjnl/language-scheme/issues"
+  },
   "license": "MIT",
   "engines": {
     "atom": ">0.50.0"

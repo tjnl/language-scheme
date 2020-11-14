@@ -1,326 +1,438 @@
-'comment': '\n\t\tThe foldings do not currently work the way I want them to. This\n\t\tmay be a limitation of the way they are applied rather than the\n\t\tregexps in use. Nonetheless, the foldings will end on the last\n\t\tidentically indented blank line following an s-expression. Not\n\t\tideal perhaps, but it works. Also, the #illegal pattern never\n\t\tmatches an unpaired ( as being illegal. Why?! -- Rob Rix\n\t\t\n\t\tOk, hopefully this grammar works better on quoted stuff now.  It\n\t\tmay break for fancy macros, but should generally work pretty\n\t\tsmoothly.  -- Jacob Rus\n\t\t\n\t\tI have attempted to get this under control but because of the way folding\n\t\tand indentation interact in Textmate, I am not sure if it is possible. In the\n\t\tmeantime, I have implemented Python-style folding anchored at newlines.\n\t\tAdditionally, I have made some minor improvements to the numeric constant\n\t\thighlighting. Next up is square bracket expressions, I guess, but that\n\t\tshould be trivial. -- ozy`\n\t'
-'fileTypes': [
+scopeName: 'source.scheme'
+name: 'Scheme'
+fileTypes: [
   'scm'
   'sch'
   'ss'
   'rkt'
 ]
-'name': 'Scheme'
-'patterns': [
-  {
-    'include': '#comment'
-  }
-  {
-    'include': '#comment-block'
-  }
-  {
-    'include': '#sexp'
-  }
-  {
-    'include': '#string'
-  }
-  {
-    'include': '#language-functions'
-  }
-  {
-    'include': '#quote'
-  }
-  {
-    'include': '#illegal'
-  }
+
+# The foldings do not currently work the way I want them to. This
+# may be a limitation of the way they are applied rather than the
+# regexps in use. Nonetheless, the foldings will end on the last
+# identically indented blank line following an s-expression. Not
+# ideal perhaps, but it works. Also, the #illegal pattern never
+# matches an unpaired ( as being illegal. Why?! -- Rob Rix
+#
+# Ok, hopefully this grammar works better on quoted stuff now.  It
+# may break for fancy macros, but should generally work pretty
+# smoothly.  -- Jacob Rus
+#
+# I have attempted to get this under control but because of the way folding
+# and indentation interact in Textmate, I am not sure if it is possible. In the
+# meantime, I have implemented Python-style folding anchored at newlines.
+# Additionally, I have made some minor improvements to the numeric constant
+# highlighting. Next up is square bracket expressions, I guess, but that
+# should be trivial. -- ozy
+
+
+patterns: [
+  { include: '#comment' }
+  { include: '#s-expression' }
+  { include: '#string' }
+  { include: '#language-function' }
+  { include: '#quote' }
+  { include: '#illegal' }
 ]
-'repository':
-  'comment':
-    'begin': '(^[ \\t]+)?(?=;)'
-    'beginCaptures':
-      '1':
-        'name': 'punctuation.whitespace.comment.leading.scheme'
-    'end': '(?!\\G)'
-    'patterns': [
-      {
-        'begin': ';'
-        'beginCaptures':
-          '0':
-            'name': 'punctuation.definition.comment.scheme'
-        'end': '\\n'
-        'name': 'comment.line.semicolon.scheme'
-      }
+
+repository:
+
+  'comment': {
+    patterns: [
+      { include: '#inlineComment' }
+      { include: '#blockComment'}
     ]
-  'comment-block':
-    'patterns': [
-      {
-        'begin': '\\#\\|'
-        'end': '\\|\\#'
-        'name': 'comment.block.r6rs.scheme'
-      }
+  }
+
+  'inlineComment': {
+    begin: '(^[ \\t]+)?(?=;)'
+    beginCaptures:
+      1: name: 'punctuation.whitespace.comment.leading.scheme'
+    end: '(?!\\G)'
+    patterns: [{ include: '#inlineCommentText' }]
+  }
+
+  'inlineCommentText': {
+    name: 'comment.line.semicolon.scheme'
+    begin: ';'
+    beginCaptures:
+      0: name: 'punctuation.definition.comment.scheme'
+    end: '\\n'
+  }
+
+  'blockComment': {
+    name: 'comment.block.r6rs.scheme'
+    begin: '\\#\\|'
+    end: '\\|\\#'
+  }
+
+  's-expression': {
+    name: 'meta.expression.scheme'
+    begin: '(\\()'
+    beginCaptures:
+      0: name: 'punctuation.section.expression.begin.scheme'
+    end: '(\\))(\\n)?'
+    endCaptures:
+      1: name: 'punctuation.section.expression.end.scheme'
+      2: name: 'meta.after-expression.scheme'
+    patterns: [
+      { include: '#inlineComment' }
+      { include: '#define-procedure' }
+      { include: '#lambda' }
+      { include: '#define-variable'}
+      { include: '#quote-keyword' }
+      { include: '#quote' }
+      { include: '#language-function' }
+      { include: '#string' }
+      { include: '#datum' }
+      { include: '#cons-dot' }
+      { include: '#s-expression' }
+      { include: '#illegal' }
     ]
-  'constants':
-    'patterns': [
-      {
-        'match': '#[t|f]'
-        'name': 'constant.language.boolean.scheme'
-      }
-      {
-        'match': '(?<=[\\(\\s])((#e|#i)?\-?[0-9]+(\\.[0-9]+)?|(#x)[0-9a-fA-F]+|(#o)[0-7]+|(#b)[01]+)(?=[\\s;()\'",\\[\\]])'
-        'name': 'constant.numeric.scheme'
-      }
+  }
+
+  'define-procedure': {
+    name: 'meta.declaration.procedure.scheme'
+    begin: '(?x)
+            (?<=\\()
+            (define)\\s+
+            (\\()
+            ([[:alnum:]][[:alnum:]!$%&*+-./:<=>?@^_~]*)
+            ((\\s+
+              ([[:alnum:]][[:alnum:]!$%&*+-./:<=>?@^_~]*|[._])
+             )*
+            )\\s*
+            (\\))'
+    captures:
+      1: name: 'keyword.control.scheme'
+      2: name: 'punctuation.definition.function.scheme'
+      3: name: 'entity.name.function.scheme'
+      4: name: 'variable.parameter.function.scheme'
+      7: name: 'punctuation.definition.function.scheme'
+    end: '(?=\\))'
+    patterns: [
+      { include: '#inlineComment' }
+      { include: '#s-expression' }
+      { include: '#illegal' }
     ]
-  'illegal':
-    'match': '[()\\[\\]]'
-    'name': 'invalid.illegal.parenthesis.scheme'
-  'language-functions':
-    'patterns': [
-      {
-        'match': '(?x)\n\t\t\t\t\t\t(?<=(\\s|\\(|\\[)) # preceded by space or ( \n\t\t\t\t\t\t( do|or|and|else|quasiquote|begin|if|case|set!|\n\t\t\t\t\t\t  cond|let|unquote|define|let\\*|unquote-splicing|delay|\n\t\t\t\t\t\t  letrec)\n\t\t\t\t\t\t(?=(\\s|\\())'
-        'name': 'keyword.control.scheme'
-      }
-      {
-        'comment': '\n\t\t\t\t\t\tThese functions run a test, and return a boolean\n\t\t\t\t\t\tanswer.\n\t\t\t\t\t'
-        'match': '(?x)\n\t\t\t\t\t\t(?<=(\\s|\\()) # preceded by space or (\n\t\t\t\t\t\t( char-alphabetic|char-lower-case|char-numeric|\n\t\t\t\t\t\t  char-ready|char-upper-case|char-whitespace|\n\t\t\t\t\t\t  (?:char|string)(?:-ci)?(?:=|<=?|>=?)|\n\t\t\t\t\t\t  atom|boolean|bound-identifier=|char|complex|\n\t\t\t\t\t\t  identifier|integer|symbol|free-identifier=|inexact|\n\t\t\t\t\t\t  eof-object|exact|list|(?:input|output)-port|pair|\n\t\t\t\t\t\t  real|rational|zero|vector|negative|odd|null|string|\n\t\t\t\t\t\t  eq|equal|eqv|even|number|positive|procedure\n\t\t\t\t\t\t)\n\t\t\t\t\t\t(\\?)\t\t# name ends with ? sign\n\t\t\t\t\t\t(?=(\\s|\\()) # followed by space or (\n\t\t\t\t\t'
-        'name': 'support.function.boolean-test.scheme'
-      }
-      {
-        'comment': '\n\t\t\t\t\t\tThese functions change one type into another.\n\t\t\t\t\t'
-        'match': '(?x)\n\t\t\t\t\t\t(?<=(\\s|\\()) # preceded by space or (\n\t\t\t\t\t\t( char->integer|exact->inexact|inexact->exact|\n\t\t\t\t\t\t  integer->char|symbol->string|list->vector|\n\t\t\t\t\t\t  list->string|identifier->symbol|vector->list|\n\t\t\t\t\t\t  string->list|string->number|string->symbol|\n\t\t\t\t\t\t  number->string\n\t\t\t\t\t\t)\n\t\t\t\t\t\t(?=(\\s|\\()) # followed by space or (\t\t\t\t\t\n\t\t\t\t\t'
-        'name': 'support.function.convert-type.scheme'
-      }
-      {
-        'comment': '\n\t\t\t\t\t\tThese functions are potentially dangerous because\n\t\t\t\t\t\tthey have side-effects which could affect other\n\t\t\t\t\t\tparts of the program.\n\t\t\t\t\t'
-        'match': '(?x)\n\t\t\t\t\t\t(?<=(\\s|\\()) # preceded by space or (\n\t\t\t\t\t\t( set-(?:car|cdr)|\t\t\t\t # set car/cdr\n\t\t\t\t\t\t  (?:vector|string)-(?:fill|set) # fill/set string/vector\n\t\t\t\t\t\t)\n\t\t\t\t\t\t(!)\t\t\t# name ends with ! sign\n\t\t\t\t\t\t(?=(\\s|\\()) # followed by space or (\n\t\t\t\t\t'
-        'name': 'support.function.with-side-effects.scheme'
-      }
-      {
-        'comment': '\n\t\t\t\t\t\t+, -, *, /, =, >, etc. \n\t\t\t\t\t'
-        'match': '(?x)\n\t\t\t\t\t\t(?<=(\\s|\\()) # preceded by space or (\n\t\t\t\t\t\t( >=?|<=?|=|[*/+-])\n\t\t\t\t\t\t(?=(\\s|\\()) # followed by space or (\n\t\t\t\t\t\t'
-        'name': 'keyword.operator.arithmetic.scheme'
-      }
-      {
-        'match': '(?x)\n\t\t\t\t\t\t(?<=(\\s|\\()) # preceded by space or (\n\t\t\t\t\t\t( append|apply|approximate|\n\t\t\t\t\t\t  call-with-current-continuation|call/cc|catch|\n\t\t\t\t\t\t  construct-identifier|define-syntax|display|foo|\n\t\t\t\t\t\t  for-each|force|cd|gen-counter|gen-loser|\n\t\t\t\t\t\t  generate-identifier|last-pair|length|let-syntax|\n\t\t\t\t\t\t  letrec-syntax|list|list-ref|list-tail|load|log|\n\t\t\t\t\t\t  macro|magnitude|map|map-streams|max|member|memq|\n\t\t\t\t\t\t  memv|min|newline|nil|not|peek-char|rationalize|\n\t\t\t\t\t\t  read|read-char|return|reverse|sequence|substring|\n\t\t\t\t\t\t  syntax|syntax-rules|transcript-off|transcript-on|\n\t\t\t\t\t\t  truncate|unwrap-syntax|values-list|write|write-char|\n\t\t\t\t\t\t  \n\t\t\t\t\t\t  # cons, car, cdr, etc\n\t\t\t\t\t\t  cons|c(a|d){1,4}r| \n                          \n\t\t\t\t\t\t  # unary math operators\n\t\t\t\t\t\t  abs|acos|angle|asin|assoc|assq|assv|atan|ceiling|\n\t\t\t\t\t\t  cos|floor|round|sin|sqrt|tan|\n\t\t\t\t\t\t  (?:real|imag)-part|numerator|denominator|\n                          \n\t\t\t\t\t\t  # other math operators\n\t\t\t\t\t\t  modulo|exp|expt|remainder|quotient|lcm|\n                          \n\t\t\t\t\t\t  # ports / files\n\t\t\t\t\t\t  call-with-(?:input|output)-file|\n\t\t\t\t\t\t  (?:close|current)-(?:input|output)-port|\n\t\t\t\t\t\t  with-(?:input|output)-from-file|\n\t\t\t\t\t\t  open-(?:input|output)-file|\n\t\t\t\t\t\t  \n\t\t\t\t\t\t  # char-«foo»\n\t\t\t\t\t\t  char-(?:downcase|upcase|ready)|\n\t\t\t\t\t\t  \n\t\t\t\t\t\t  # make-«foo»\n\t\t\t\t\t\t  make-(?:polar|promise|rectangular|string|vector)\n\t\t\t\t\t\t  \n\t\t\t\t\t\t  # string-«foo», vector-«foo»\n\t\t\t\t\t\t  string(?:-(?:append|copy|length|ref))?|\n\t\t\t\t\t\t  vector(?:-length|-ref)\n\t\t\t\t\t\t)\n\t\t\t\t\t\t(?=(\\s|\\()) # followed by space or (\n\t\t\t\t\t'
-        'name': 'support.function.general.scheme'
-      }
+  }
+
+  'define-variable': {
+    name: 'meta.declaration.variable.scheme'
+    begin: '(?x)
+            (?<=\\()
+            (define)\\s
+            ([[:alnum:]][[:alnum:]!$%&*+-./:<=>?@^_~]*)
+            \\s*
+            .*?'
+    captures:
+      1: name: 'keyword.control.scheme'
+      2: name: 'variable.other.scheme'
+    end: '(?=\\))'
+    patterns: [
+      { include: '#inlineComment' }
+      { include: '#datum' }
+      { include: '#string' }
+      { include: '#quote' }
+      { include: '#s-expression' }
+      { include: '#illegal' }
     ]
-  'quote':
-    'comment': '\n\t\t\t\tWe need to be able to quote any kind of item, which creates\n\t\t\t\ta tiny bit of complexity in our grammar.  It is hopefully\n\t\t\t\tnot overwhelming complexity.\n\t\t\t\t\n\t\t\t\tNote: the first two matches are special cases.  quoted\n\t\t\t\tsymbols, and quoted empty lists are considered constant.other\n\t\t\t\t\n\t\t\t'
-    'patterns': [
-      {
-        'captures':
-          '1':
-            'name': 'punctuation.section.quoted.symbol.scheme'
-        'match': '(?x)\n\t\t\t\t\t\t(\')\\s*\n\t\t\t\t\t\t([[:alnum:]][[:alnum:]!$%&*+-./:<=>?@^_~]*)\n\t\t\t\t\t'
-        'name': 'constant.other.symbol.scheme'
-      }
-      {
-        'captures':
-          '1':
-            'name': 'punctuation.section.quoted.empty-list.scheme'
-          '2':
-            'name': 'meta.expression.scheme'
-          '3':
-            'name': 'punctuation.section.expression.begin.scheme'
-          '4':
-            'name': 'punctuation.section.expression.end.scheme'
-        'match': '(?x)\n\t\t\t\t\t\t(\')\\s*\n\t\t\t\t\t\t((\\()\\s*(\\)))\n\t\t\t\t\t'
-        'name': 'constant.other.empty-list.schem'
-      }
-      {
-        'begin': '(\')\\s*'
-        'beginCaptures':
-          '1':
-            'name': 'punctuation.section.quoted.scheme'
-        'comment': 'quoted double-quoted string or s-expression'
-        'end': '(?=[\\s()])|(?<=\\n)'
-        'name': 'string.other.quoted-object.scheme'
-        'patterns': [
-          {
-            'include': '#quoted'
-          }
-        ]
-      }
+  }
+
+  'lambda': {
+    name: 'meta.declaration.procedure.scheme'
+    comment: 'Not sure this one is quite correct.  That \\s* is
+              particularly troubling'
+    begin: '(?x)
+            (?<=\\()
+            (lambda)\\s+
+            (\\()
+              (
+                (?:
+                  ([[:alnum:]][[:alnum:]!$%&*+-./:<=>?@^_~]*|[._])
+                  \\s+
+                )*
+                (?:
+                  ([[:alnum:]][[:alnum:]!$%&*+-./:<=>?@^_~]*|[._])
+                )?
+              )
+            (\\))'
+    captures:
+      1: name: 'keyword.control.scheme'
+      2: name: 'punctuation.definition.variable.scheme'
+      3: name: 'variable.parameter.scheme'
+      6: name: 'punctuation.definition.variable.scheme'
+    end: '(?=\\))'
+    patterns: [
+      { include: '#inlineComment' }
+      { include: '#s-expression' }
+      { include: '#illegal' }
     ]
-  'quote-sexp':
-    'begin': '(?<=\\()\\s*(quote)\\b\\s*'
-    'beginCaptures':
-      '1':
-        'name': 'keyword.control.quote.scheme'
-    'comment': '\n\t\t\t\tSomething quoted with (quote «thing»).  In this case «thing»\n\t\t\t\twill not be evaluated, so we are considering it a string.\n\t\t\t'
-    'contentName': 'string.other.quote.scheme'
-    'end': '(?=[\\s)])|(?<=\\n)'
-    'patterns': [
-      {
-        'include': '#quoted'
-      }
+  }
+
+  'datum': {
+    patterns: [
+      { include: '#boolean' }
+      { include: '#character'}
+      { include: '#named-character'}
+      { include: '#number' }
+      { include: '#hex-literal'}
     ]
-  'quoted':
-    'patterns': [
-      {
-        'include': '#string'
-      }
-      {
-        'begin': '(\\()'
-        'beginCaptures':
-          '1':
-            'name': 'punctuation.section.expression.begin.scheme'
-        'end': '(\\))'
-        'endCaptures':
-          '1':
-            'name': 'punctuation.section.expression.end.scheme'
-        'name': 'meta.expression.scheme'
-        'patterns': [
-          {
-            'include': '#quoted'
-          }
-        ]
-      }
-      {
-        'include': '#quote'
-      }
-      {
-        'include': '#illegal'
-      }
+  }
+
+  'boolean': {
+    name: 'constant.language.boolean.scheme'
+    match: '#[t|f]'
+  }
+
+  'character':{
+    name: 'constant.character.escape.scheme'
+    comment: '#\ followed by any character'
+    match: '(?<=[\\(\\s])(#\\\\).(?=[\\s\\)])'
+  }
+
+  'named-character': {
+    name: 'constant.character.named.scheme'
+    match: '(?<=[\\(\\s])(#\\\\)(space|newline|tab)(?=[\\s\\)])'
+  }
+
+  'number': {
+    name: 'constant.numeric.scheme'
+    match: '(?<=[\\(\\s])((#e|#i)?[0-9]+(\\.[0-9]+)?|(#x)[0-9a-fA-F]+|(#o)[0-7]+|(#b)[01]+)(?=[\\s;()\'",\\[\\]])'
+  }
+
+  'hex-literal': {
+    name: 'constant.character.hex-literal.scheme'
+    match: '(?<=[\\(\\s])(#\\\\)x[0-9A-F]{2,4}(?=[\\s\\)])'
+  }
+
+  'cons-dot': {
+    name: 'punctuation.separator.cons.scheme'
+    comment: 'the . in (a . b) which conses together two elements a and b.
+              (a b c) == (a . (b . (c . nil)))'
+    match: '(?<=[ ()])\\.(?=[ ()])'
+  }
+
+  'string': {
+    name: 'string.quoted.double.scheme'
+    begin: '(")'
+    beginCaptures:
+      1: name: 'punctuation.definition.string.begin.scheme'
+    end: '(")'
+    endCaptures:
+      1: name: 'punctuation.definition.string.end.scheme'
+    patterns: [
+      { include: '#escaped-string-character' }
+      { include: '#invalid-escaped-string-character' }
     ]
-  'sexp':
-    'begin': '(\\()'
-    'beginCaptures':
-      '1':
-        'name': 'punctuation.section.expression.begin.scheme'
-    'end': '(\\))(\\n)?'
-    'endCaptures':
-      '1':
-        'name': 'punctuation.section.expression.end.scheme'
-      '2':
-        'name': 'meta.after-expression.scheme'
-    'name': 'meta.expression.scheme'
-    'patterns': [
-      {
-        'include': '#comment'
-      }
-      {
-        'begin': '(?x)\n\t\t\t\t\t\t(?<=\\()       # preceded by (\n\t\t\t\t\t\t(define)\\s+   # define\n\t\t\t\t\t\t(\\()          # list of parameters\n\t\t\t\t\t\t  ([[:alnum:]][[:alnum:]!$%&*+-./:<=>?@^_~]*)\n\t\t\t\t\t\t  ((\\s+\n\t\t\t\t\t\t    ([[:alnum:]][[:alnum:]!$%&*+-./:<=>?@^_~]*|[._])\n\t\t\t\t\t\t   )*\n\t\t\t\t\t\t  )\\s*\n\t\t\t\t\t\t(\\))\n\t\t\t\t\t'
-        'captures':
-          '1':
-            'name': 'keyword.control.scheme'
-          '2':
-            'name': 'punctuation.definition.function.scheme'
-          '3':
-            'name': 'entity.name.function.scheme'
-          '4':
-            'name': 'variable.parameter.function.scheme'
-          '7':
-            'name': 'punctuation.definition.function.scheme'
-        'end': '(?=\\))'
-        'name': 'meta.declaration.procedure.scheme'
-        'patterns': [
-          {
-            'include': '#comment'
-          }
-          {
-            'include': '#sexp'
-          }
-          {
-            'include': '#illegal'
-          }
-        ]
-      }
-      {
-        'begin': '(?x)\n\t\t\t\t\t\t(?<=\\() # preceded by (\n\t\t\t\t\t\t(lambda)\\s+\n\t\t\t\t\t\t(\\() # opening paren\n\t\t\t\t\t\t((?:\n\t\t\t\t\t\t  ([[:alnum:]][[:alnum:]!$%&*+-./:<=>?@^_~]*|[._])\n\t\t\t\t\t\t  \\s+\n\t\t\t\t\t\t)*(?:\n\t\t\t\t\t\t  ([[:alnum:]][[:alnum:]!$%&*+-./:<=>?@^_~]*|[._])\n\t\t\t\t\t\t)?)\n\t\t\t\t\t\t(\\)) # closing paren\n\t\t\t\t\t'
-        'captures':
-          '1':
-            'name': 'keyword.control.scheme'
-          '2':
-            'name': 'punctuation.definition.variable.scheme'
-          '3':
-            'name': 'variable.parameter.scheme'
-          '6':
-            'name': 'punctuation.definition.variable.scheme'
-        'comment': '\n\t\t\t\t\t\tNot sure this one is quite correct.  That \\s* is\n\t\t\t\t\t\tparticularly troubling\n\t\t\t\t\t'
-        'end': '(?=\\))'
-        'name': 'meta.declaration.procedure.scheme'
-        'patterns': [
-          {
-            'include': '#comment'
-          }
-          {
-            'include': '#sexp'
-          }
-          {
-            'include': '#illegal'
-          }
-        ]
-      }
-      {
-        'begin': '(?<=\\()(define)\\s([[:alnum:]][[:alnum:]!$%&*+-./:<=>?@^_~]*)\\s*.*?'
-        'captures':
-          '1':
-            'name': 'keyword.control.scheme'
-          '2':
-            'name': 'variable.other.scheme'
-        'end': '(?=\\))'
-        'name': 'meta.declaration.variable.scheme'
-        'patterns': [
-          {
-            'include': '#comment'
-          }
-          {
-            'include': '#sexp'
-          }
-          {
-            'include': '#illegal'
-          }
-        ]
-      }
-      {
-        'include': '#quote-sexp'
-      }
-      {
-        'include': '#quote'
-      }
-      {
-        'include': '#language-functions'
-      }
-      {
-        'include': '#string'
-      }
-      {
-        'include': '#constants'
-      }
-      {
-        'match': '(?<=[\\(\\s])(#\\\\)(space|newline|tab)(?=[\\s\\)])'
-        'name': 'constant.character.named.scheme'
-      }
-      {
-        'match': '(?<=[\\(\\s])(#\\\\)x[0-9A-F]{2,4}(?=[\\s\\)])'
-        'name': 'constant.character.hex-literal.scheme'
-      }
-      {
-        'match': '(?<=[\\(\\s])(#\\\\).(?=[\\s\\)])'
-        'name': 'constant.character.escape.scheme'
-      }
-      {
-        'comment': '\n\t\t\t\t\t\tthe . in (a . b) which conses together two elements\n\t\t\t\t\t\ta and b. (a b c) == (a . (b . (c . nil)))\n\t\t\t\t\t'
-        'match': '(?<=[ ()])\\.(?=[ ()])'
-        'name': 'punctuation.separator.cons.scheme'
-      }
-      {
-        'include': '#sexp'
-      }
-      {
-        'include': '#illegal'
-      }
+  }
+
+  'escaped-string-character': {
+    comment: 'Literal backslash character followed by double-quote or backslash'
+    name: 'constant.character.escape.scheme'
+    match: '\\\\[\\"\\\\]'
+  }
+
+  'invalid-escaped-string-character': {
+    comment: 'Literal backslash character followed by any other character'
+    name: 'invalid.illegal.character_not_allowed_here.scheme'
+    match: '\\\\(?=[^\\"\\\\])'
+  }
+
+  'language-function': {
+    patterns: [
+      { include: '#control-keyword' } # not the best label!
+      { include: '#predicate' }
+      { include: '#type-convert-keyword' }
+      { include: '#support-function-with-side-effect' }
+      { include: '#arithmetic-operator' }
+      { include: '#other-function'}
     ]
-  'string':
-    'begin': '(")'
-    'beginCaptures':
-      '1':
-        'name': 'punctuation.definition.string.begin.scheme'
-    'end': '(")'
-    'endCaptures':
-      '1':
-        'name': 'punctuation.definition.string.end.scheme'
-    'name': 'string.quoted.double.scheme'
-    'patterns': [
-      {
-        'match': '\\\\.'
-        'name': 'constant.character.escape.scheme'
-      }
+  }
+
+  'control-keyword': {
+    name: 'keyword.control.scheme'
+    match: '(?x)
+            (?<=(\\s|\\(|\\[))
+            ( do|or|and|else|quasiquote|begin|if|case|set!|
+              cond|let|unquote|define|let\\*|unquote-splicing|delay|
+              letrec
+            )
+            (?=(\\s|\\())'
+  }
+
+  'predicate': {
+    name: 'support.function.boolean-test.scheme'
+    comment: 'These functions run a test, and return a boolean answer.
+              Note: name ends with ?'
+    match: '(?x)
+            (?<=(\\s|\\())
+            ( char-alphabetic|char-lower-case|char-numeric|
+              char-ready|char-upper-case|char-whitespace|
+              (?:char|string)(?:-ci)?(?:=|<=?|>=?)|
+              atom|boolean|bound-identifier=|char|complex|
+              identifier|integer|symbol|free-identifier=|inexact|
+              eof-object|exact|list|(?:input|output)-port|pair|
+              real|rational|zero|vector|negative|odd|null|string|
+              eq|equal|eqv|even|number|positive|procedure
+            )
+            (\\?)
+            (?=(\\s|\\())'
+  }
+
+  'type-convert-keyword': {
+    name: 'support.function.convert-type.scheme'
+    comment: 'These functions change one type into another.'
+    match: '(?x)
+            (?<=(\\s|\\())
+            ( char->integer|exact->inexact|inexact->exact|
+              integer->char|symbol->string|list->vector|
+              list->string|identifier->symbol|vector->list|
+              string->list|string->number|string->symbol|
+              number->string
+            )
+            (?=(\\s|\\())'
+  }
+
+  'support-function-with-side-effects': {
+    name: 'support.function.with-side-effects.scheme'
+    comment: 'These functions are potentially dangerous because
+              they have side-effects which could affect other
+              parts of the program.
+              Note: name ends with !'
+    match: '(?x)
+            (?<=(\\s|\\())
+            ( set-(?:car|cdr)|
+              (?:vector|string)-(?:fill|set)
+            )
+            (!)
+            (?=(\\s|\\())'
+  }
+
+  'arithmetic-operator': {
+    name: 'keyword.operator.arithmetic.scheme'
+    comment: '+, -, *, /, =, >, etc.'
+    match: '(?x)
+            (?<=(\\s|\\())
+            ( >=?|<=?|=|[*/+-])
+            (?=(\\s|\\())'
+  }
+
+  'other-function': {
+    name: 'support.function.general.scheme'
+    match: '(?x)
+            (?<=(\\s|\\())
+            ( append|apply|approximate|
+              call-with-current-continuation|call/cc|catch|
+              construct-identifier|define-syntax|display|foo|
+              for-each|force|cd|gen-counter|gen-loser|
+              generate-identifier|last-pair|length|let-syntax|
+              letrec-syntax|list|list-ref|list-tail|load|log|
+              macro|magnitude|map|map-streams|max|member|memq|
+              memv|min|newline|nil|not|peek-char|rationalize|
+              read|read-char|return|reverse|sequence|substring|
+              syntax|syntax-rules|transcript-off|transcript-on|
+              truncate|unwrap-syntax|values-list|write|write-char|
+
+              cons|c(a|d){1,4}r|
+
+              abs|acos|angle|asin|assoc|assq|assv|atan|ceiling|
+              cos|floor|round|sin|sqrt|tan|
+              (?:real|imag)-part|numerator|denominator|
+
+              modulo|exp|expt|remainder|quotient|lcm|
+
+              call-with-(?:input|output)-file|
+              (?:close|current)-(?:input|output)-port|
+              with-(?:input|output)-from-file|
+              open-(?:input|output)-file|
+
+              char-(?:downcase|upcase|ready)|
+
+              make-(?:polar|promise|rectangular|string|vector)
+
+              string(?:-(?:append|copy|length|ref))?|
+              vector(?:-length|-ref)
+            )
+            (?=(\\s|\\())'
+  }
+
+  'quote': {
+    comment: 'We need to be able to quote any kind of item, which creates
+              a tiny bit of complexity in our grammar. It is hopefully
+              not overwhelming complexity.
+              Note: the first two matches are special cases. Quoted
+              symbols and quoted empty lists are considered constant.other'
+    patterns: [
+      { include: '#quoted-symbol'}
+      { include: '#quoted-empty-list'}
+      { include: '#quoted-string-or-s-expression'}
     ]
-'scopeName': 'source.scheme'
+  }
+
+  'quoted-symbol': {
+    name: 'constant.other.symbol.scheme'
+    match: '(?x)
+            (\')\\s*
+            ([[:alnum:]][[:alnum:]!$%&*+-./:<=>?@^_~]*)'
+    captures:
+      1: name: 'punctuation.section.quoted.symbol.scheme'
+  }
+
+  'quoted-empty-list': {
+    name: 'constant.other.empty-list.scheme'
+    match: '(?x)
+            (\')\\s*
+            ((\\()\\s*(\\)))'
+    captures:
+      1: name: 'punctuation.section.quoted.empty-list.scheme'
+      2: name: 'meta.expression.scheme'
+      3: name: 'punctuation.section.expression.begin.scheme'
+      4: name: 'punctuation.section.expression.end.scheme'
+    }
+
+  'quoted-string-or-s-expression': {
+    name: 'string.other.quoted-object.scheme'
+    comment: 'quoted double-quoted string or s-expression'
+    begin: '(\')\\s*'
+    beginCaptures:
+      1: name: 'punctuation.section.quoted.scheme'
+    end: '(?=[\\s()])|(?<=\\n)'
+    patterns: [{ include: '#quoted-content' }]
+  }
+
+  'quote-keyword': {
+    comment: 'Something quoted with (quote «thing»).  In this case «thing»
+              will not be evaluated, so we are considering it a string.'
+    begin: '(?<=\\()\\s*(quote)\\b\\s*'
+    beginCaptures:
+      1: name: 'keyword.control.quote.scheme'
+    contentName: 'string.other.quote.scheme'
+    end: '(?=[\\s)])|(?<=\\n)'
+    patterns: [{ include: '#quoted-content' }]
+  }
+
+  'quoted-content': {
+    patterns: [
+      { include: '#string' }
+      { include: '#quote' }
+      { include: '#illegal' }
+      { include: '#content-of-quoted-content'}
+    ]
+  }
+
+  'content-of-quoted-content': {
+    name: 'meta.expression.scheme'
+    begin: '(\\()'
+    beginCaptures:
+      1: name: 'punctuation.section.expression.begin.scheme'
+    end: '(\\))'
+    endCaptures:
+      1: name: 'punctuation.section.expression.end.scheme'
+    patterns: [{ include: '#quoted-content' }]
+  }
+
+  'illegal': {
+    name: 'invalid.illegal.parenthesis.scheme'
+    match: '[()\\[\\]]'
+  }
